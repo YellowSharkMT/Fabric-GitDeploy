@@ -1,6 +1,6 @@
 #Fabric-GitDeploy
 
-This is a [Fabric](http://fabfile.org] script that contains a number of tasks to aid in the process of deploying web applications.
+This is a [Fabric](http://fabfile.org) script that contains a number of tasks to aid in the process of deploying web applications.
 
 See `fab -l` for list of tasks, and `fab -d TASKNAME` for detailed information on a task.
 
