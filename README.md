@@ -28,14 +28,13 @@ destination server, and then updating a few database entries to make WordPress w
 
 Example usage:
 
-- fab db            # Runs task with the default parameters, same as the following:
-- fab db:prod,local # Updates the local database with the latest database dump from the production server.
-- fab db:prod,dev   # This does the same as above, except the destination is to the dev server.
+- `fab db            # Runs task with the default parameters, same as the following:`
+- `fab db:prod,local # Updates the local database with the latest database dump from the production server.`
+- `fab db:prod,dev   # This does the same as above, except the destination is to the dev server.`
 
 Note: using "local" as a source is not currently supported.
 
 Arguments: src='prod', dest='local'
-
 
 ###`deploy`
 
@@ -48,9 +47,9 @@ for more info), restarting PHP (to flush the opcode cache), and flushing the Var
 
 Example usage:
 
-- fab deploy        # Most common, this pushes latest local updates to the production server.
-- fab deploy:prod   # Same as above, as "prod" is the default destination.
-- fab deploy:dev    # Deploys code to the dev server
+- `fab deploy        # Most common, this pushes latest local updates to the production server.`
+- `fab deploy:prod   # Same as above, as "prod" is the default destination.`
+- `fab deploy:dev    # Deploys code to the dev server`
 
 
 Arguments: dest='prod', branch='master', dest_branch='master'
@@ -61,10 +60,9 @@ Dumps a database, then downloads it to `backup/` folder. Useful for performing b
 
 Example usage:
 
-- fab dump            # dumps the prod database, downloads it to the local `backup/` folder.
-- fab dump:prod,True  # same as above, these are the task defaults.
-- fab dump:dev,False  # dumps the dev environment's database, but does NOT download it, this just leaves it on the
-    remote server.
+- `fab dump            # dumps the prod database, downloads it to the local `backup/` folder.`
+- `fab dump:prod,True  # same as above, these are the task defaults.`
+- `fab dump:dev,False  # dumps the dev environment's database, but does NOT download it, this just leaves it on the remote server.`
 
 Note that there is no "cleanup" command or anything that deletes these dump files from the remote server, so if you
 have space constraints, you'll need to manually go in and purge the `archives` directory (which is defined at the
@@ -88,6 +86,23 @@ either with supervisor, or with your own server-land script(s).
 
 Arguments: dest=None
 
+###`rsync`
+
+Synchronizes the unversioned folders from one environment to another. (src: prod, dest: local)
+Typically this is used to download the WordPress uploads folder from the production server, as well as any other
+folders defined in the UNVERSIONED_FOLDERS config value. Note that this function DOES NOT copy/transfer any of the
+application code - that must be done instead using the "deploy" task.
+
+Example usage:
+
+- `fab rsync             # Default params, same as following command.`
+- `fab rsync:prod,local  # Downloads unversioned files from the production to the local server.`
+- `fab rsync:local,prod  # NOT RECOMMENDED - have not developed/tested this yet.`
+- `fab rsync:local,dev   # NOT RECOMMENDED - have not developed/tested this yet.`
+- `fab rsync:prod,dev    # NOT RECOMMENDED - have not tested this, nor is it necessary UNLESS the dev server is on a different server than the prod server. Also, not sure rsync supports one remote to another.`
+
+Arguments: src='prod', dest='local'
+
 ###`sync`
 
 [COMMON] Synchronizes the database and un-versioned files from one environment to another. (src: prod, dest: local)
@@ -99,27 +114,9 @@ done instead using the "deploy" task.
 
 Example usage:
 
-- fab sync              # Updates local site with latest database & files from the prod site
-- fab sync:local,dev    # NOT RECOMMENDED - have not developed/tested this functionality.
-- fab sync:local,prod   # NOT RECOMMENDED - have not developed/tested this functionality.
-
-Arguments: src='prod', dest='local'
-
-###`rsync`
-
-Synchronizes the unversioned folders from one environment to another. (src: prod, dest: local)
-Typically this is used to download the WordPress uploads folder from the production server, as well as any other
-folders defined in the UNVERSIONED_FOLDERS config value. Note that this function DOES NOT copy/transfer any of the
-application code - that must be done instead using the "deploy" task.
-
-Example usage:
-
-- fab rsync             # Default params, same as following command.
-- fab rsync:prod,local  # Downloads unversioned files from the production to the local server.
-- fab rsync:local,prod  # NOT RECOMMENDED - have not developed/tested this yet.
-- fab rsync:local,dev   # NOT RECOMMENDED - have not developed/tested this yet.
-- fab rsync:prod,dev    # NOT RECOMMENDED - have not tested this, nor is it necessary UNLESS the dev server is on
-    a different server than the prod server. Also, not sure rsync supports one remote to another.
+- `fab sync              # Updates local site with latest database & files from the prod site`
+- `fab sync:local,dev    # NOT RECOMMENDED - have not developed/tested this functionality.`
+- `fab sync:local,prod   # NOT RECOMMENDED - have not developed/tested this functionality.`
 
 Arguments: src='prod', dest='local'
 
@@ -129,7 +126,8 @@ Tests connection to a specified host. (env)
 
 Example usage:
 
-- test:dev
-- test:prod
+- `test:dev`
+- `test:prod`
 
 Arguments: env_name
+
