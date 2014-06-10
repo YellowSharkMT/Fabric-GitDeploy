@@ -121,7 +121,7 @@ def deploy(dest='prod', branch='master', dest_branch='master'):
 @task
 def test(env_name):
     """
-    Tests connection to a specified host. (env)
+    Tests connection to a specified host. (env_name)
 
     Example usage:
 
@@ -198,6 +198,7 @@ def sync_db(src='prod', dest='local'):
 def sync_files(src='prod', dest='local'):
     """
     Synchronizes the unversioned folders from one environment to another. (src: prod, dest: local)
+
     Typically this is used to download the WordPress uploads folder from the production server, as well as any other
     folders defined in the UNVERSIONED_FOLDERS config value. Note that this function DOES NOT copy/transfer any of the
     application code - that must be done instead using the "deploy" task.
