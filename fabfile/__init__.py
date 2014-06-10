@@ -7,6 +7,7 @@ from contextlib import contextmanager
 import time
 import os
 import sys
+import re
 
 env.use_ssh_config = True
 
@@ -23,7 +24,7 @@ UNVERSIONED_FOLDERS = [
 ]
 
 # This controls whether the info-header is shown.
-SHOW_HEADER = True
+SHOW_HEADER = False
 if SHOW_HEADER:
     def _print_header():
         print('** Fabfile for WEBSITE.com, contact YOUR NAVE <YOUREMAIL@EMAIL.COM> with questions.')
@@ -35,7 +36,7 @@ if SHOW_HEADER:
 
     _print_header()
 
-# Controls output of the `run()` commands. For verbose output, set this to "False".
+# Controls output of the `run()` commands. For verbose output, set this to `False`.
 QUIET_COMMANDS = True
 
 
@@ -98,9 +99,9 @@ def deploy(dest='prod', branch='master', dest_branch='master'):
 
     Example usage:
 
-    - fab deploy        # Most common, this pushes latest local updates to the production server.
-    - fab deploy:prod   # Same as above, as "prod" is the default destination.
-    - fab deploy:dev    # Deploys code to the dev server
+    - `fab deploy        # Most common, this pushes latest local updates to the production server.`
+    - `fab deploy:prod   # Same as above, as "prod" is the default destination.`
+    - `fab deploy:dev    # Deploys code to the dev server`
 
     """
     with lcd(env.local['root']):
@@ -124,8 +125,8 @@ def test(env_name):
 
     Example usage:
 
-    - test:dev
-    - test:prod
+    - `test:dev`
+    - `test:prod`
     """
     with _host(env_name):
         print('Executing `uname -a` on %s' % env_name)
@@ -144,9 +145,9 @@ def sync(src='prod', dest='local'):
 
     Example usage:
 
-    - fab sync              # Updates local site with latest database & files from the prod site
-    - fab sync:local,dev    # NOT RECOMMENDED - have not developed/tested this functionality.
-    - fab sync:local,prod   # NOT RECOMMENDED - have not developed/tested this functionality.
+    - `fab sync              # Updates local site with latest database & files from the prod site`
+    - `fab sync:local,dev    # NOT RECOMMENDED - have not developed/tested this functionality.`
+    - `fab sync:local,prod   # NOT RECOMMENDED - have not developed/tested this functionality.`
     """
     sync_db(src, dest)
     sync_files(src, dest)
@@ -163,9 +164,9 @@ def sync_db(src='prod', dest='local'):
 
     Example usage:
 
-    - fab db            # Runs task with the default parameters, same as the following:
-    - fab db:prod,local # Updates the local database with the latest database dump from the production server.
-    - fab db:prod,dev   # This does the same as above, except the destination is to the dev server.
+    - `fab db            # Runs task with the default parameters, same as the following:`
+    - `fab db:prod,local # Updates the local database with the latest database dump from the production server.`
+    - `fab db:prod,dev   # This does the same as above, except the destination is to the dev server.`
 
     Note: using "local" as a source is not currently supported.
     """
@@ -203,12 +204,11 @@ def sync_files(src='prod', dest='local'):
 
     Example usage:
 
-    - fab rsync             # Default params, same as following command.
-    - fab rsync:prod,local  # Downloads unversioned files from the production to the local server.
-    - fab rsync:local,prod  # NOT RECOMMENDED - have not developed/tested this yet.
-    - fab rsync:local,dev   # NOT RECOMMENDED - have not developed/tested this yet.
-    - fab rsync:prod,dev    # NOT RECOMMENDED - have not tested this, nor is it necessary UNLESS the dev server is on
-        a different server than the prod server. Also, not sure rsync supports one remote to another.
+    - `fab rsync             # Default params, same as following command.`
+    - `fab rsync:prod,local  # Downloads unversioned files from the production to the local server.`
+    - `fab rsync:local,prod  # NOT RECOMMENDED - have not developed/tested this yet.`
+    - `fab rsync:local,dev   # NOT RECOMMENDED - have not developed/tested this yet.`
+    - `fab rsync:prod,dev    # NOT RECOMMENDED - have not tested this, nor is it necessary UNLESS the dev server is on a different server than the prod server. Also, not sure rsync supports one remote to another.`
     """
     for dir in UNVERSIONED_FOLDERS:
         cmd_vars = {
@@ -236,10 +236,9 @@ def dump(src='prod', fetch_dump=True):
 
     Example usage:
 
-    - fab dump            # dumps the prod database, downloads it to the local `backup/` folder.
-    - fab dump:prod,True  # same as above, these are the task defaults.
-    - fab dump:dev,False  # dumps the dev environment's database, but does NOT download it, this just leaves it on the
-        remote server.
+    - `fab dump            # dumps the prod database, downloads it to the local `backup/` folder.`
+    - `fab dump:prod,True  # same as above, these are the task defaults.`
+    - `fab dump:dev,False  # dumps the dev environment's database, but does NOT download it, this just leaves it on the remote server.`
 
     Note that there is no "cleanup" command or anything that deletes these dump files from the remote server, so if you
     have space constraints, you'll need to manually go in and purge the `archives` directory (which is defined at the
@@ -423,6 +422,40 @@ def _filter_quiet_commands(cmd):
             cmd()
     else:
         cmd()
+
+def _build_docs():
+    """
+    This builds out documentation of the tasks for the README.md file. To re-build the docs, just open the python
+    interpreter, `import fabfile`, and then run `fabfile._build_docs()`.
+    """
+    with lcd(os.path.dirname(__file__)):
+        print('Building docs....')
+        output = local('fab --shortlist', capture=True)
+        tasks = output.split('\n')
+
+        task_docs = []
+        for t in tasks:
+            task_doc = local('fab -d ' + t, capture=True)
+            task_doc = task_doc.replace('\n    ', '\n')
+            task_doc = re.sub(r'Displaying detailed information for task \'%s\':\n\n' % t, '', task_doc)
+            task_docs.append(dict(task=t, doc=task_doc))
+
+        doc_text = ''
+        for td in task_docs:
+            text = '###`' + td['task'] + '`'
+            text += '\n\n'
+            text += td['doc']
+            text += '\n\n'
+
+            doc_text += text
+
+        with open('README.md','r+') as f:
+            readme_text = f.read()
+            DELIMITER = '##Information on tasks:\n\n'
+            top = readme_text.split(DELIMITER)[0]
+            f.seek(0)
+            f.truncate()
+            f.write(top + DELIMITER + doc_text)
 
 
 ### ----- Context Managers -------- ###
