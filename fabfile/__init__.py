@@ -381,7 +381,8 @@ def _post_deploy(dest):
     files, and restart any services (PHP, Varnish, etc.)
 
     File permissions changed:
-    - TODO: implement this
+    - 755 for the webroot & subdirectories
+    - 644 for files inside of the webroot
 
     Files removed by this task:
     - .gitignore
@@ -403,7 +404,9 @@ def _post_deploy(dest):
             run(
                 'rm -rf .gitignore bower.json package.json Gruntfile.js fabfile/ Vagrantfile puphpet/ backup/',
                 quiet=QUIET_COMMANDS)
-    restart()
+            run('find . -type d -exec chmod 755 {} \;', quiet=True)
+            run('find . -type f -exec chmod 644 {} \;', quiet=True)    
+        restart()
 
 
 def _filter_quiet_commands(cmd):
