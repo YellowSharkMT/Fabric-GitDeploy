@@ -14,6 +14,8 @@ except ImportError as e:
 
 
 ### --- Configure the `env` & show/hide the header --- ###
+__all__ = ['deploy', 'db_sync', 'file_sync', 'provision', 'upgrade', 'sync', 'dump', 'restart', 'test']
+
 env.use_ssh_config = True
 
 env['local'] = LOCAL
