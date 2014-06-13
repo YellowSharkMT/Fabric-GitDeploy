@@ -69,11 +69,22 @@ top of this file).
 
 Arguments: src='prod', fetch_dump=True
 
+###`provision`
+
+NOT RECOMMENDED - Provisions web root & archive folders, as well as git repo.
+
+This task has not been hard-tested, and since it rarely needs to be done, there hasn't been much effort put into
+scripting this aspect of things, especially considering all of the error-handling that would need to go on with this.
+
+Instead, consider it a rough guide of things to do, in order to set up a new location for deployment.
+
+Arguments: dest=None
+
 ###`restart`
 
 Executes any commands defined in the APP_RESTART_COMMANDS config value.
 
-Arguments: dest=None
+Arguments: dest='prod'
 
 ###`rsync`
 
@@ -112,20 +123,17 @@ Arguments: src='prod', dest='local'
 
 ###`test`
 
-Tests connection to a specified host. (env_name)
+Tests connection to a specified host. (dest: prod)
 
 Example usage:
 
 - `test:dev`
 - `test:prod`
 
-Arguments: env_name
+Arguments: dest='prod'
 
 ###`upgrade`
 
-Executes upgrade procedure: downloads tarball of master into a local temp folder,
-then copies the contents of the new `fabfile/` folder into the local `fabfile/` folder,
-and then cleans up/removes the upgrade package.
-
-Arguments:
+No docstring provided
+Arguments: self
 
