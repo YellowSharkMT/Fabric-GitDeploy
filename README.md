@@ -34,7 +34,7 @@ Example usage:
 
 Note: using "local" as a source is not currently supported.
 
-Arguments: self, src='prod', dest='local'
+Arguments: src='prod', dest='local'
 
 ###`deploy`
 
@@ -51,7 +51,7 @@ Example usage:
 - `fab deploy:prod   # Same as above, as "prod" is the default destination.`
 - `fab deploy:dev    # Deploys code to the dev server`
 
-Arguments: self, dest='prod', branch='master', dest_branch='master'
+Arguments: dest='prod', branch='master', dest_branch='master'
 
 ###`dump`
 

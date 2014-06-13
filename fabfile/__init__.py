@@ -263,6 +263,7 @@ def _build_docs():
             task_doc = local('fab -d ' + t, capture=True)
             task_doc = task_doc.replace('\n    ', '\n')
             task_doc = re.sub(r'Displaying detailed information for task \'%s\':\n\n' % t, '', task_doc)
+            task_doc = task_doc.replace('Arguments: self,', 'Arguments:')
             task_docs.append(dict(task=t, doc=task_doc))
 
         doc_text = ''
