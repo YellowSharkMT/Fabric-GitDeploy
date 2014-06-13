@@ -256,6 +256,21 @@ def _provision(dest):
                 sys.exit(0)
 
 
+@task
+def upgrade():
+    """
+    Executes upgrade procedure: downloads tarball of master into a local temp folder,
+    then copies the contents of the new `fabfile/` folder into the local `fabfile/` folder,
+    and then cleans up/removes the upgrade package.
+    """
+    if confirm('This will upgrade the Fabric-GitDeploy package. Continue?'):
+        local('mkdir ./fabric-upgrade')
+        local('curl -L https://github.com/YellowSharkMT/Fabric-GitDeploy/tarball/master' +
+               '| tar -xz --strip-components=1 -C fabric-upgrade/')
+        local('cp -r ./fabric-upgrade/fabfile/* ./fabfile/.')
+        local('rm -rf ./fabric-upgrade/')
+
+
 ### ----- Private Functions -------- ###
 def _migrate(dest='local'):
     """
