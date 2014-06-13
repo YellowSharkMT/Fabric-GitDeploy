@@ -13,6 +13,9 @@ default_prod_host = env['prod']['hosts'][0]
 default_local_host = env['local']['hosts'][0]
 
 class DBSync(Task):
+    """
+    Copies the database from one server to another, essentially an export/import. (src: prod, dest: local)
+    """
     name = 'db'
     cmd_data = dict()
     

@@ -38,8 +38,18 @@ Arguments: self, src='prod', dest='local'
 
 ###`deploy`
 
-Executes the various parts of the deployment scheme: pushing the code, updating the remote code,
-executing post-deployment commands, and finally the app-restart commands.
+Deploys your local code to a remote server. (dest: prod, branch: master, dest_branch: master)
+
+This task pushes your local git repo to the destination server, then updates the destination's webroot via
+`git pull`. Then it executes any post-deployment tasks, like setting file permissions, as well as deleting any
+sensitive files from the webroot (.git files, Gruntfile, Vagrant configs, etc. See the `_post_deploy()` function
+for more info), restarting PHP (to flush the opcode cache), and flushing the Varnish cache.
+
+Example usage:
+
+- `fab deploy        # Most common, this pushes latest local updates to the production server.`
+- `fab deploy:prod   # Same as above, as "prod" is the default destination.`
+- `fab deploy:dev    # Deploys code to the dev server`
 
 Arguments: self, dest='prod', branch='master', dest_branch='master'
 
