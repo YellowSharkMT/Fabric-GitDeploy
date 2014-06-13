@@ -1,6 +1,6 @@
 #Fabric-GitDeploy
 
-This is a WordPress-centric [Fabric](http://fabfile.org) script that contains a number of tasks to aid in the process of deploying web apps. It should be easily modified to suit other applications besides WordPress though, as it covers several common needs: shuffling databases, pushing to & pulling from Git repositories, and synchronizing unversioned files (like uploaded assets, sitemaps, etc). 
+This is a WordPress-centric [Fabric](http://fabfile.org) package that contains a number of tasks to aid in the process of deploying web apps. It should be easily modified to suit other applications besides WordPress though, as it covers several common needs: shuffling databases, pushing to & pulling from Git repositories, and synchronizing unversioned files (like uploaded assets, sitemaps, etc). 
 
 See `fab -l` for list of tasks, and `fab -d TASKNAME` for detailed information on a task.
 
