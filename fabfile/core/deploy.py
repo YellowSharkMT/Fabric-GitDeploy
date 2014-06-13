@@ -52,7 +52,7 @@ class Deploy(Task):
         
     def push_app(self):
         """
-        Git-pushes the local repository to the destination (which should correspond to a git remote
+        Git-pushes the local repository to the destination (needs to correspond to a git remote)
         """
         with lcd(env.local['root']):
             print('Pushing %(branch)s branch to %(dest)s:%(dest_branch)s...' % self.cmd_data)
