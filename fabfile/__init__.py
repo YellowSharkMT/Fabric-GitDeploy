@@ -1,3 +1,4 @@
+### --- Fabric/Global Imports --- ###
 from __future__ import with_statement
 from fabric.api import *
 from fabric.contrib.console import confirm
@@ -9,6 +10,7 @@ import os
 import sys
 import re
 
+### --- Local Imports --- ###
 try:
     from config import LOCAL, DEV, PROD, PROJECT_NAME, WP_PREFIX, UNVERSIONED_FOLDERS, \
     POST_DEPLOY_COMMANDS, APP_RESTART_COMMANDS, SHOW_HEADER, HEADER_FN, QUIET_COMMANDS, \
@@ -16,48 +18,27 @@ try:
 except ImportError as e:
     raise Exception('There was a problem loading the configuration values: ' + e.message)
 
+### --- Configure the `env` & show/hide the header --- ###
 env.use_ssh_config = True
+
 env['local'] = LOCAL
 env['dev'] = DEV
 env['prod'] = PROD
 
+env.roledefs = {
+    'prod': PROD['hosts'],
+    'dev': DEV['hosts'],
+    'local': LOCAL['hosts']
+}
 
+# Show the header
 if SHOW_HEADER:
     HEADER_FN()
-
+    
 
 ### --------------- Fabric Tasks --------------------- ###
-@task
-def deploy(dest='prod', branch='master', dest_branch='master'):
-    """
-    [COMMON] Deploys your local code to a remote server. (dest: prod, branch: master, dest_branch: master)
-
-    This task pushes your local git repo to the destination server, then updates the destination's webroot via
-    `git pull`. Then it executes any post-deployment tasks, like setting file permissions, as well as deleting any
-    sensitive files from the webroot (.git files, Gruntfile, Vagrant configs, etc. See the `_post_deploy()` function
-    for more info), restarting PHP (to flush the opcode cache), and flushing the Varnish cache.
-
-    Example usage:
-
-    - `fab deploy        # Most common, this pushes latest local updates to the production server.`
-    - `fab deploy:prod   # Same as above, as "prod" is the default destination.`
-    - `fab deploy:dev    # Deploys code to the dev server`
-
-    """
-    with lcd(env.local['root']):
-        print('Pushing %s branch to %s:%s...' % (branch, dest, dest_branch))
-        cmd = lambda: local('git push %s %s:%s' % (dest, branch, dest_branch))
-        _filter_quiet_commands(cmd)
-
-    with _host(dest):
-        with cd(env[dest]['root']):
-            # note the dependency on the remote name "origin"
-            print('Updating destination from %s:%s...' % (dest, dest_branch))
-            run('git reset --hard && git pull origin %s' % dest_branch, quiet=QUIET_COMMANDS)
-
-        _post_deploy(dest)
-        restart()
-
+from core import Deploy
+d = Deploy()
 
 @task
 def test(env_name):
@@ -318,19 +299,6 @@ def _make_update_sql(db_name, *args, **kwargs):
     return sql
 
 
-def _post_deploy(dest):
-    """
-    Executes the commands defined in POST_DEPLOY_COMMANDS, from the config.py 
-    file. Typically this would be a good place to set file permissions, file  
-    cleanup, etc.
-    """
-
-    with _host(dest):
-        with cd(env[dest]['root']):
-            for cmd in POST_DEPLOY_COMMANDS:
-                run(cmd % env[dest], quiet=QUIET_COMMANDS)                
-
-
 def _filter_quiet_commands(cmd):
     """
     Takes a callable of some sort, and depending on the QUIET_COMMANDS config value, it suppresses (or doesn't) the
@@ -349,6 +317,7 @@ def _filter_quiet_commands(cmd):
     else:
         cmd()
 
+        
 def _build_docs():
     """
     This builds out documentation of the tasks for the README.md file. To re-build the docs, just open the python
