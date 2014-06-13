@@ -18,8 +18,8 @@ class Deploy(Task):
     cmd_data = dict(branch=None, dest=None, dest_branch=None)
     
     def __init__(self, *args, **kwargs):
-        pass
-        
+        super(Deploy, self).__init__(*args, **kwargs)
+
         
     def run(self, dest='prod', branch='master', dest_branch='master', *args, **kwargs):
         """

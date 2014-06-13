@@ -20,7 +20,7 @@ class DBSync(Task):
     cmd_data = dict()
     
     def __init__(self,*args, **kwargs):
-        pass
+        super(DBSync, self).__init__(*args, **kwargs)
         
     def run(self, src='prod', dest='local', *args, **kwargs):
         """

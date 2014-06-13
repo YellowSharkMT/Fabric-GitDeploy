@@ -18,6 +18,7 @@ class FileSync(Task):
     cmd_data = dict()
     
     def __init__(self,*args, **kwargs):
+        super(FileSync, self).__init__(*args, **kwargs)
         pass
         
     def run(self, src='prod', dest='local', *args, **kwargs):
