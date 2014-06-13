@@ -2,7 +2,7 @@
 This file contains the deploy task.
 """
 # Fabric/Global Imports
-from fabric.api import env, run, local, cd, lcd, quiet, execute, parallel
+from fabric.api import env, run, local, cd, lcd, quiet, execute, parallel, roles
 from fabric.tasks import Task
 
 # Local Imports
@@ -48,6 +48,7 @@ class Deploy(Task):
             execute(self.restart, role=dest)
         
         
+    @roles('local')
     def push_app(self):
         """
         Git-pushes the local repository to the destination (needs to correspond to a git remote)
@@ -59,6 +60,7 @@ class Deploy(Task):
     
     
     @parallel
+    @roles('prod')
     def update_remote(self):
         """ 
         Updates the remote server's application code, via git pull.
@@ -72,6 +74,7 @@ class Deploy(Task):
     
     
     @parallel
+    @roles('prod')
     def post_deploy(self):
         """
         Executes the commands defined in POST_DEPLOY_COMMANDS, from the config.py 
@@ -83,8 +86,9 @@ class Deploy(Task):
             for cmd in POST_DEPLOY_COMMANDS:
                 run(cmd % env[dest], quiet=QUIET_COMMANDS)                
 
-                
+
     @parallel
+    @roles('prod')
     def restart(self):
         """
         Executes any commands defined in the APP_RESTART_COMMANDS config value.
@@ -92,5 +96,3 @@ class Deploy(Task):
         print('Restarting application...')
         for cmd in APP_RESTART_COMMANDS:
             run(cmd, quiet=QUIET_COMMANDS)
-
-
