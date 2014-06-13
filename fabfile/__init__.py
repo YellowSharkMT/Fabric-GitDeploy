@@ -1,13 +1,7 @@
 ### --- Fabric/Global Imports --- ###
 from __future__ import with_statement
 from fabric.api import *
-from fabric.contrib.console import confirm
-from fabric.contrib.files import exists
-from fabric.context_managers import quiet
-from contextlib import contextmanager
-import time
 import os
-import sys
 import re
 
 ### --- Local Imports --- ###
