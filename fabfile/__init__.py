@@ -38,25 +38,11 @@ if SHOW_HEADER:
     
 
 ### --------------- Fabric Tasks --------------------- ###
-from core import Deploy, DBSync
+from core import Deploy, DBSync, FileSync
 
 deploy = Deploy()
 db_sync = DBSync()
-
-
-@task
-def test(env_name):
-    """
-    Tests connection to a specified host. (env_name)
-
-    Example usage:
-
-    - `test:dev`
-    - `test:prod`
-    """
-    with _host(env_name):
-        print('Executing `uname -a` on %s' % env_name)
-        run('uname -a')
+file_sync = FileSync()
 
 
 @task
@@ -76,44 +62,7 @@ def sync(src='prod', dest='local'):
     - `fab sync:local,prod   # NOT RECOMMENDED - have not developed/tested this functionality.`
     """
     execute(db_sync.run, src, dest)
-
-    sync_files(src, dest)
-
-
-@task(name='rsync')
-def sync_files(src='prod', dest='local'):
-    """
-    Synchronizes the unversioned folders from one environment to another. (src: prod, dest: local)
-
-    Typically this is used to download the WordPress uploads folder from the production server, as well as any other
-    folders defined in the UNVERSIONED_FOLDERS config value. Note that this function DOES NOT copy/transfer any of the
-    application code - that must be done instead using the "deploy" task.
-
-    Example usage:
-
-    - `fab rsync             # Default params, same as following command.`
-    - `fab rsync:prod,local  # Downloads unversioned files from the production to the local server.`
-    - `fab rsync:local,prod  # NOT RECOMMENDED - have not developed/tested this yet.`
-    - `fab rsync:local,dev   # NOT RECOMMENDED - have not developed/tested this yet.`
-    - `fab rsync:prod,dev    # NOT RECOMMENDED - have not tested this, nor is it necessary UNLESS the dev server is on a different server than the prod server. Also, not sure rsync supports one remote to another.`
-    """
-    for dir in UNVERSIONED_FOLDERS:
-        cmd_vars = {
-            'src_host': env[src]['hostname'],
-            'dest_host': env[dest]['hostname'],
-            'root': env[src]['root'],
-            'dest_root': env[dest]['root'],
-            'dir': dir,
-            'extra_options': '--cvs-exclude',
-        }
-        if src == 'local':
-            cmd = 'rsync -ravz %(extra_options)s %(root)s/%(dir)s/ %(dest_host)s:%(dest_root)s/%(dir)s' % cmd_vars
-        else:
-            cmd = 'rsync -ravz %(extra_options)s %(src_host)s:%(root)s/%(dir)s/ %(dest_root)s/%(dir)s' % cmd_vars
-        print('Syncing unversioned files...')
-        with quiet():
-            local(cmd)
-    pass
+    execute(file_sync.run, src, dest)
 
 
 @task
@@ -131,35 +80,20 @@ def dump(src='prod', fetch_dump=True):
     have space constraints, you'll need to manually go in and purge the `archives` directory (which is defined at the
     top of this file).
     """
-    with _host(src):
-        cmd_vars = env[src]['db']
-        #print cmd_vars
-        #return
-        dump_cmd = 'mysqldump -u %(user)s -p%(password)s -h %(host)s %(name)s' % cmd_vars
-        dump_fn_stem = '%s-%s.%s' % (PROJECT_NAME, time.strftime("%Y.%m.%d-%H.%M.%S"), src)
-        dump_fn = '%s/%s.sql.gz' % (env[src]['archive'], dump_fn_stem)
-        cmd = '%s | gzip > %s' % (dump_cmd, dump_fn)
-        print('Dumping database...')
-        run(cmd, quiet=QUIET_COMMANDS)
-
-    if fetch_dump and src != 'local':
-        _fetch(src, dump_fn)
-
-    return dump_fn
+    if fetch_dump is True:
+        result = execute(db_sync.dump_fetch, src)
+        print('Database dump has been downloaded to %s.' % result.popitem()[1])
+    else:
+        result = execute(db_sync.dump, src)
+        print('Database has been dumped to to %s:%s.' % (src, result.popitem()[1][1]))
 
 
 @task
-def restart(dest=None):
+def restart(dest='prod'):
     """
     Executes any commands defined in the APP_RESTART_COMMANDS config value.
     """
-    if dest is None:
-        dest = 'prod'
-
-    with _host(dest):
-        print('Restarting application...')
-        for cmd in APP_RESTART_COMMANDS:
-            run(cmd, quiet=QUIET_COMMANDS)
+    execute(deploy.restart, role=dest)
 
 
 def _provision(dest):
@@ -215,6 +149,21 @@ def upgrade():
                '| tar -xz --strip-components=1 -C fabric-upgrade/')
         local('cp -r ./fabric-upgrade/fabfile/* ./fabfile/.')
         local('rm -rf ./fabric-upgrade/')
+
+
+@task
+def test(env_name):
+    """
+    Tests connection to a specified host. (env_name)
+
+    Example usage:
+
+    - `test:dev`
+    - `test:prod`
+    """
+    with _host(env_name):
+        print('Executing `uname -a` on %s' % env_name)
+        run('uname -a')
 
 
 ### ----- Private Functions -------- ###
