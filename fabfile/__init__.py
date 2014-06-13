@@ -11,7 +11,8 @@ import re
 
 try:
     from config import LOCAL, DEV, PROD, PROJECT_NAME, WP_PREFIX, UNVERSIONED_FOLDERS, \
-    POST_DEPLOY_COMMANDS, APP_RESTART_COMMANDS, SHOW_HEADER, HEADER_FN, QUIET_COMMANDS
+    POST_DEPLOY_COMMANDS, APP_RESTART_COMMANDS, SHOW_HEADER, HEADER_FN, QUIET_COMMANDS, \
+    DATABASE_MIGRATION_COMMANDS
 except ImportError as e:
     raise Exception('There was a problem loading the configuration values: ' + e.message)
 
@@ -123,7 +124,7 @@ def sync_db(src='prod', dest='local'):
         insert_dump_fn = dump_fn
 
     insert_cmd = 'mysql -u %(user)s -p%(password)s -h %(host)s %(name)s' % env[dest]['db']
-    cmd = 'gunzip < %s | %s' % (insert_dump_fn, insert_cmd)
+    cmd = lambda: 'gunzip < %s | %s' % (insert_dump_fn, insert_cmd)
     print('Inserting database....')
 
     if dest == 'local':
@@ -285,7 +286,7 @@ def _migrate(dest='local'):
     just insert a file that's already been downloaded by a previous sync, and then just run this `_migrate()` task.
     """
     with _host(dest):
-        sql = _make_update_sql(env[dest]['db']['name'], env[dest]['home_url'], env[dest]['wp_url'])
+        sql = _make_update_sql(env[dest]['db']['name'], home_url=env[dest]['home_url'], wp_url=env[dest]['wp_url'])
         cmd_prefix = ('mysql -u %(user)s -p%(password)s -h %(host)s %(name)s' % env[dest]['db'])
 
         print('Running MySQL migration commands...')
@@ -305,19 +306,15 @@ def _fetch(host, fn):
             return get(fn, env['local']['archive'])
 
 
-def _make_update_sql(db_name, home_url, wp_url):
+def _make_update_sql(db_name, *args, **kwargs):
     """
-    Generates & returns MySQL commands to update WordPress. `site_url` and `home` need to be updated, in the wp_options
-    table. However, you could write any SQL you like here, for example a search/replace for the PROD_URL and the LOCAL_URL,
-    like if you wanted all attachments/images to be served from your local server, instead of the prod server. Generally
-    attachments aren't much of a problem, and I tend to only update the bare minimum to make WordPress run locally.
+    Generates & returns MySQL commands to migrate the database. Typically this involves things like updating hostnames, 
+    and/or URLs, or any other sort of site-specific options that might be stored in the database. For example, to shift 
+    a WordPress database from one hostname to another, you must update the `site_url` and `home` values in the `wp_options`
+    table.
     """
-    sql = [
-        ("UPDATE %s.%s_options SET option_value='%s' WHERE option_name='siteurl'" % (db_name, WP_PREFIX, wp_url)),
-        ("UPDATE %s.%s_options SET option_value='%s' WHERE option_name='home'" % (db_name, WP_PREFIX, home_url)),
-        # Add new commands below:
-        #('UPDATE something yadda yadda.....')
-    ]
+    cmd_data = dict(db_name=db_name, db_prefix=WP_PREFIX, **kwargs)
+    sql = [(cmd % cmd_data) for cmd in DATABASE_MIGRATION_COMMANDS]
     return sql
 
 

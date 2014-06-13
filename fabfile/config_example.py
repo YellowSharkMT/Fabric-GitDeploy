@@ -95,6 +95,20 @@ APP_RESTART_COMMANDS = [
 
 
 """
+These commands will be interpolated with the variables listed below, and will be executed on
+the destination server, via bash, after the database has been inserted.
+- db_name
+- db_prefix
+- wp_url
+- home_url
+"""
+DATABASE_MIGRATION_COMMANDS = [
+    "UPDATE %(db_name)s.%(db_prefix)s_options SET option_value='%(wp_url)s' WHERE option_name='siteurl'",
+    "UPDATE %(db_name)s.%(db_prefix)s_options SET option_value='%(home_url)s' WHERE option_name='home'",
+]
+
+
+"""
 This controls whether the header is shown or not
 """
 SHOW_HEADER = False
