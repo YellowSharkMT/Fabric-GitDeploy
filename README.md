@@ -8,13 +8,15 @@ There are variables to configure at the top of the `fabfile/__init__.py` script 
 
 ##Available tasks:
 
-    db       Copies the database from one server to another, essentially an export/import. (src: prod, dest: local)
-    deploy   [COMMON] Deploys your local code to a remote server. (dest: prod, branch: master, dest_branch: master)
-    dump     Dumps a database, then downloads it to `backup/` folder. Useful for performing back-ups. (src: prod, fetch_dump: True)
-    restart  Restarts the PHP-FPM & Varnish services. (dest)
-    rsync    Synchronizes the unversioned folders from one environment to another. (src: prod, dest: local)
-    sync     [COMMON] Synchronizes the database and un-versioned files from one environment to another. (src: prod, dest: local)
-    test     Tests connection to a specified host. (env)
+    db         Copies the database from one server to another, essentially an export/import. (src: prod, dest: local)
+    deploy     Deploys your local code to a remote server. (dest: prod, branch: master, dest_branch: master)
+    dump       Dumps a database, then downloads it to `backup/` folder. Useful for performing back-ups. (src: prod, fetch_dump: True)
+    provision  NOT RECOMMENDED - Provisions web root & archive folders, as well as git repo.
+    restart    Executes any commands defined in the APP_RESTART_COMMANDS config value.
+    rsync      Synchronizes the unversioned folders from one environment to another. (src: prod, dest: local)
+    sync       Synchronizes the database and un-versioned files from one environment to another. (src: prod, dest: local)
+    test       Tests connection to a specified host. (dest: prod)
+    upgrade    Upgrades the Fabric-GitDeploy package.
 
 ##Information on tasks:
 
