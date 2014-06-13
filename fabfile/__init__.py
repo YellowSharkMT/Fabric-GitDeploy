@@ -53,7 +53,7 @@ def sync(src='prod', dest='local'):
 
     Typically this task is used to update the local environment so that it matches the production server. For more
     information on either the datbase synchronization procedure, or the way it synchronizes the files, see the
-    "sync_db" and "sync_files" tasks. Note that this task DOES NOT copy/transfer any application code, that must be
+    `DBSync` and `FileSync` tasks (under `core/`). Note that this task DOES NOT copy/transfer any application code, that must be
     done instead using the "deploy" task.
 
     Example usage:

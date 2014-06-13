@@ -108,11 +108,11 @@ Arguments: src='prod', dest='local'
 
 ###`sync`
 
-[COMMON] Synchronizes the database and un-versioned files from one environment to another. (src: prod, dest: local)
+Synchronizes the database and un-versioned files from one environment to another. (src: prod, dest: local)
 
 Typically this task is used to update the local environment so that it matches the production server. For more
 information on either the datbase synchronization procedure, or the way it synchronizes the files, see the
-"sync_db" and "sync_files" tasks. Note that this task DOES NOT copy/transfer any application code, that must be
+`DBSync` and `FileSync` tasks (under `core/`). Note that this task DOES NOT copy/transfer any application code, that must be
 done instead using the "deploy" task.
 
 Example usage:
@@ -136,6 +136,11 @@ Arguments: dest='prod'
 
 ###`upgrade`
 
-No docstring provided
+Executes upgrade procedure: downloads tarball of master into a local temp folder,
+then copies the contents of the new `fabfile/` folder into the local `fabfile/` folder,
+and then cleans up/removes the upgrade package.
+
+This overwrites everything inside of the `fabfile/` folder, *except* your `config.py` file.
+
 Arguments: self
 
