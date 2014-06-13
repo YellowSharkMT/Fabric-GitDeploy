@@ -9,81 +9,20 @@ import os
 import sys
 import re
 
+try:
+    from config import LOCAL, DEV, PROD, PROJECT_NAME, WP_PREFIX, UNVERSIONED_FOLDERS, \
+    POST_DEPLOY_COMMANDS, APP_RESTART_COMMANDS, SHOW_HEADER, HEADER_FN, QUIET_COMMANDS
+except ImportError as e:
+    raise Exception('There was a problem loading the configuration values: ' + e.message)
+
 env.use_ssh_config = True
+env['local'] = LOCAL
+env['dev'] = DEV
+env['prod'] = PROD
 
 
-# ## -------- Local Settings ------------- ###
-PROJECT_NAME = 'PROJECT_NAME'
-
-# Table prefix for the WordPress database.
-WP_PREFIX = 'wp'
-
-# Contents of these folders will be downloaded to this machine. Typically you would include at the least the uploads directory.
-UNVERSIONED_FOLDERS = [
-    'blog/wp-content/uploads'
-]
-
-# This controls whether the info-header is shown.
-SHOW_HEADER = False
 if SHOW_HEADER:
-    def _print_header():
-        print('** Fabfile for WEBSITE.com, contact YOUR NAVE <YOUREMAIL@EMAIL.COM> with questions.')
-        print('** Use `fab -l` to list all tasks.')
-        print('** Use `fab -d TASKNAME` to show documentation & usage examples for a task.')
-        print('** Ex. usage: `fab deploy:dev sync:prod,dev`')
-        print('** For more information on Fabric, visit http://fabfile.org.')
-        print('')
-
-    _print_header()
-
-# Controls output of the `run()` commands. For verbose output, set this to `False`.
-QUIET_COMMANDS = True
-
-
-### -------- Environments --------------- ###
-env['local'] = {
-    'hostname': 'localhost',
-    'home_url': 'http://local.website.com/',
-    'wp_url': 'http://local.website.com/',
-    'archive': '~/backup',
-    'root': '~/www',
-    'db': {
-        'user': 'DB_USER',
-        'password': 'DB_PASS',
-        'name': 'DB_NAME',
-        'host': 'DB_HOST_NAME',
-    }
-}
-
-env['dev'] = {
-    'hostname': 'user@server',  # Can use hosts defined in SSH config here
-    'home_url': 'http://dev.website.com/',
-    'wp_url': 'http://dev.website.com/',
-    'archive': '~/webapps/PROJECT_NAME/archives',
-    'root': '~/webapps/PROJECT_NAME/dev',
-    'repo': '~/webapps/PROJECT_NAME/PROJECT_NAME.git',
-    'db': {
-        'user': 'DB_USER',
-        'password': 'DB_PASS',
-        'name': 'DB_NAME',
-        'host': 'DB_HOST_NAME',
-    }
-}
-
-env['prod'] = {
-    'hostname': 'user@server',  # Can use hosts defined in SSH config here
-    'home_url': 'http://www.website.com/',
-    'wp_url': 'http://www.website.com/blog/',
-    'archive': '~/webapps/PROJECT_NAME/archives',
-    'root': '~/webapps/PROJECT_NAME/www',
-    'repo': '~/webapps/PROJECT_NAME/PROJECT_NAME.git',
-    'db': {
-        'user': 'DB_USER',
-        'password': 'DB_PASS',
-        'name': 'DB_NAME',
-        'host': 'DB_HOST_NAME',
-    }
-}
+    HEADER_FN()
 
 
 ### --------------- Fabric Tasks --------------------- ###
@@ -116,6 +55,7 @@ def deploy(dest='prod', branch='master', dest_branch='master'):
             run('git reset --hard && git pull origin %s' % dest_branch, quiet=QUIET_COMMANDS)
 
         _post_deploy(dest)
+        restart()
 
 
 @task
@@ -265,24 +205,15 @@ def dump(src='prod', fetch_dump=True):
 @task
 def restart(dest=None):
     """
-    Restarts the PHP-FPM & Varnish services. (dest)
-
-    This is typically executed as part of deploying the application code, in order to flush to PHP opcode cache, as
-    well as the Varnish cache. Both of those services are controlled by supervisor, so this just involves sending a
-    command to supervisorctl.
-
-    Typically this `restart()` task is invoked by other tasks, but it can be useful to run it on its own sometimes,
-    especially if updating files on the remote server manually (for whatever reason).
-
-    Note that for high-load environments, where ZERO downtime is allowed, you'll want to look into graceful reloads,
-    either with supervisor, or with your own server-land script(s).
+    Executes any commands defined in the APP_RESTART_COMMANDS config value.
     """
     if dest is None:
         dest = 'prod'
 
     with _host(dest):
-        print('Restarting PHP & Varnish...')
-        run('/home/PROJECT_NAME/bin/supervisorctl restart php-fpm: varnish:', quiet=QUIET_COMMANDS)
+        print('Restarting application...')
+        for cmd in APP_RESTART_COMMANDS:
+            run(cmd, quiet=QUIET_COMMANDS)
 
 
 def _provision(dest):
@@ -377,36 +308,15 @@ def _make_update_sql(db_name, home_url, wp_url):
 
 def _post_deploy(dest):
     """
-    Executes a customized set of post-deployment commands, typically used to set file permissions, remove sensitive
-    files, and restart any services (PHP, Varnish, etc.)
-
-    File permissions changed:
-    - 755 for the webroot & subdirectories
-    - 644 for files inside of the webroot
-
-    Files removed by this task:
-    - .gitignore
-    - backup/
-    - bower.json
-    - fabfile/
-    - Gruntfile.js
-    - package.json
-    - puphpet/
-    - Vagrantfile
-
-    Services restarted:
-    - PHP & Varnish, see the `restart()` task for more info.
+    Executes the commands defined in POST_DEPLOY_COMMANDS, from the config.py 
+    file. Typically this would be a good place to set file permissions, file  
+    cleanup, etc.
     """
+
     with _host(dest):
         with cd(env[dest]['root']):
-            # Clean up some unwanted files
-            print('Cleaning up...')
-            run(
-                'rm -rf .gitignore bower.json package.json Gruntfile.js fabfile/ Vagrantfile puphpet/ backup/',
-                quiet=QUIET_COMMANDS)
-            run('find . -type d -exec chmod 755 {} \;', quiet=True)
-            run('find . -type f -exec chmod 644 {} \;', quiet=True)    
-        restart()
+            for cmd in POST_DEPLOY_COMMANDS:
+                run(cmd % env[dest], quiet=QUIET_COMMANDS)                
 
 
 def _filter_quiet_commands(cmd):
