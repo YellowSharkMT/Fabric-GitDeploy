@@ -18,6 +18,7 @@ try:
 except ImportError as e:
     raise Exception('There was a problem loading the configuration values: ' + e.message)
 
+
 ### --- Configure the `env` & show/hide the header --- ###
 env.use_ssh_config = True
 
@@ -37,8 +38,11 @@ if SHOW_HEADER:
     
 
 ### --------------- Fabric Tasks --------------------- ###
-from core import Deploy
-d = Deploy()
+from core import Deploy, DBSync
+
+deploy = Deploy()
+db_sync = DBSync()
+
 
 @task
 def test(env_name):
@@ -71,49 +75,9 @@ def sync(src='prod', dest='local'):
     - `fab sync:local,dev    # NOT RECOMMENDED - have not developed/tested this functionality.`
     - `fab sync:local,prod   # NOT RECOMMENDED - have not developed/tested this functionality.`
     """
-    sync_db(src, dest)
+    execute(db_sync.run, src, dest)
+
     sync_files(src, dest)
-
-
-@task(name='db')
-def sync_db(src='prod', dest='local'):
-    """
-    Copies the database from one server to another, essentially an export/import. (src: prod, dest: local)
-
-    This involves dumping a database, downloading it to the local server if necessary, inserting it into the
-    destination server, and then updating a few database entries to make WordPress work on the destination server
-    (like wp_options/home, and wp_options/siteurl).
-
-    Example usage:
-
-    - `fab db            # Runs task with the default parameters, same as the following:`
-    - `fab db:prod,local # Updates the local database with the latest database dump from the production server.`
-    - `fab db:prod,dev   # This does the same as above, except the destination is to the dev server.`
-
-    Note: using "local" as a source is not currently supported.
-    """
-
-    if src == 'local':
-        print('Using the local database as a source is not currently supported.')
-        return
-
-    dump_fn = dump(src, False)
-    if dest == 'local':
-        fetch_result = _fetch(src, dump_fn)
-        insert_dump_fn = fetch_result[0]
-    else:
-        insert_dump_fn = dump_fn
-
-    insert_cmd = 'mysql -u %(user)s -p%(password)s -h %(host)s %(name)s' % env[dest]['db']
-    cmd = lambda: 'gunzip < %s | %s' % (insert_dump_fn, insert_cmd)
-    print('Inserting database....')
-
-    if dest == 'local':
-        _filter_quiet_commands(cmd)
-    else:
-        with _host(dest):
-            run(cmd, quiet=QUIET_COMMANDS)
-    _migrate(dest)
 
 
 @task(name='rsync')
@@ -254,28 +218,6 @@ def upgrade():
 
 
 ### ----- Private Functions -------- ###
-def _migrate(dest='local'):
-    """
-    Updates WordPress database so it works on a different server (dest: local).
-    Typically this task is executed immediately after inserting newer contents into a database, like as part of the
-    "sync" task. It updates a couple options in WordPress to make the site run on a different hostname. See the
-    `_make_update_sql()` function for more detailed information on the database commands that are executed.
-
-    It is strongly advised that you DO NOT RUN THIS ON A PRODUCTION DATABASE. (but you could...) The normal use-case
-    for this command, aside from the scenario described above, were if you were developing something that required
-    you to constantly reset the database with a specific file. Rather than running the `sync()` task, you might want to
-    just insert a file that's already been downloaded by a previous sync, and then just run this `_migrate()` task.
-    """
-    with _host(dest):
-        sql = _make_update_sql(env[dest]['db']['name'], home_url=env[dest]['home_url'], wp_url=env[dest]['wp_url'])
-        cmd_prefix = ('mysql -u %(user)s -p%(password)s -h %(host)s %(name)s' % env[dest]['db'])
-
-        print('Running MySQL migration commands...')
-        for query in sql:
-            cmd = cmd_prefix + (' -s -N -e "%s"' % query)
-            run(cmd, quiet=QUIET_COMMANDS)
-
-
 def _fetch(host, fn):
     """
     Fetches a remote database's dump file (src, fn), from the `archives` directory of the specified environment. There
@@ -285,18 +227,6 @@ def _fetch(host, fn):
         print('Fetching database...')
         with quiet():
             return get(fn, env['local']['archive'])
-
-
-def _make_update_sql(db_name, *args, **kwargs):
-    """
-    Generates & returns MySQL commands to migrate the database. Typically this involves things like updating hostnames, 
-    and/or URLs, or any other sort of site-specific options that might be stored in the database. For example, to shift 
-    a WordPress database from one hostname to another, you must update the `site_url` and `home` values in the `wp_options`
-    table.
-    """
-    cmd_data = dict(db_name=db_name, db_prefix=WP_PREFIX, **kwargs)
-    sql = [(cmd % cmd_data) for cmd in DATABASE_MIGRATION_COMMANDS]
-    return sql
 
 
 def _filter_quiet_commands(cmd):
