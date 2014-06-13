@@ -34,7 +34,7 @@ Example usage:
 
 Note: using "local" as a source is not currently supported.
 
-Arguments: src='prod', dest='local'
+Arguments: self, src='prod', dest='local'
 
 ###`deploy`
 

@@ -15,21 +15,6 @@ default_prod_host = env['prod']['hosts'][0]
 default_local_host = env['local']['hosts'][0]
 
 class DBSync(Task):
-    """
-    Copies the database from one server to another, essentially an export/import. (src: prod, dest: local)
-
-    This involves dumping a database, downloading it to the local server if necessary, inserting it into the
-    destination server, and then updating a few database entries to make WordPress work on the destination server
-    (like wp_options/home, and wp_options/siteurl).
-
-    Example usage:
-
-    - `fab db            # Runs task with the default parameters, same as the following:`
-    - `fab db:prod,local # Updates the local database with the latest database dump from the production server.`
-    - `fab db:prod,dev   # This does the same as above, except the destination is to the dev server.`
-
-    Note: using "local" as a source is not currently supported.
-    """
     name = 'db'
     cmd_data = dict()
     
@@ -38,11 +23,19 @@ class DBSync(Task):
         
     def run(self, src='prod', dest='local', *args, **kwargs):
         """
-        :param src: source server (default = prod)
-        :param dest: destination server (default = local)
-        :param args: [currently not in use]
-        :param kwargs: [currently not in use]
-        :return:
+        Copies the database from one server to another, essentially an export/import. (src: prod, dest: local)
+
+        This involves dumping a database, downloading it to the local server if necessary, inserting it into the
+        destination server, and then updating a few database entries to make WordPress work on the destination server
+        (like wp_options/home, and wp_options/siteurl).
+
+        Example usage:
+
+        - `fab db            # Runs task with the default parameters, same as the following:`
+        - `fab db:prod,local # Updates the local database with the latest database dump from the production server.`
+        - `fab db:prod,dev   # This does the same as above, except the destination is to the dev server.`
+
+        Note: using "local" as a source is not currently supported.
         """
         if src == 'local':
             raise ValueError('Using the local database as a source is not currently supported.')
