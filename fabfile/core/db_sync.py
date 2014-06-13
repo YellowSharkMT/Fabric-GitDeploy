@@ -2,11 +2,9 @@
 This file contains the database synchronization task.
 """
 # Fabric/Global Imports
-from fabric.api import env, run, local, cd, lcd, quiet, execute, parallel, roles, hosts, get
+from fabric.api import env, run, quiet, execute, hosts, get
 from fabric.tasks import Task
 import time
-import sys
-import os
 
 # Local Imports
 from ..config import QUIET_COMMANDS, WP_PREFIX, DATABASE_MIGRATION_COMMANDS, PROJECT_NAME
