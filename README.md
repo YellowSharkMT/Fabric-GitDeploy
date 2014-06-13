@@ -72,23 +72,14 @@ Arguments: src='prod', fetch_dump=True
 
 ###`restart`
 
-Restarts the PHP-FPM & Varnish services. (dest)
-
-This is typically executed as part of deploying the application code, in order to flush to PHP opcode cache, as
-well as the Varnish cache. Both of those services are controlled by supervisor, so this just involves sending a
-command to supervisorctl.
-
-Typically this `restart()` task is invoked by other tasks, but it can be useful to run it on its own sometimes,
-especially if updating files on the remote server manually (for whatever reason).
-
-Note that for high-load environments, where ZERO downtime is allowed, you'll want to look into graceful reloads,
-either with supervisor, or with your own server-land script(s).
+Executes any commands defined in the APP_RESTART_COMMANDS config value.
 
 Arguments: dest=None
 
 ###`rsync`
 
 Synchronizes the unversioned folders from one environment to another. (src: prod, dest: local)
+
 Typically this is used to download the WordPress uploads folder from the production server, as well as any other
 folders defined in the UNVERSIONED_FOLDERS config value. Note that this function DOES NOT copy/transfer any of the
 application code - that must be done instead using the "deploy" task.
@@ -122,7 +113,7 @@ Arguments: src='prod', dest='local'
 
 ###`test`
 
-Tests connection to a specified host. (env)
+Tests connection to a specified host. (env_name)
 
 Example usage:
 
