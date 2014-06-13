@@ -49,7 +49,7 @@ upgrade = Upgrade()
 @task
 def sync(src='prod', dest='local'):
     """
-    [COMMON] Synchronizes the database and un-versioned files from one environment to another. (src: prod, dest: local)
+    Synchronizes the database and un-versioned files from one environment to another. (src: prod, dest: local)
 
     Typically this task is used to update the local environment so that it matches the production server. For more
     information on either the datbase synchronization procedure, or the way it synchronizes the files, see the
