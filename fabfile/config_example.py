@@ -34,7 +34,7 @@ DEV = {
         'password': 'DB_PASS',
         'name': 'DB_NAME',
         'host': 'DB_HOST_NAME',
-    }
+    },
     # The `repo` property is optional, it is only used by the provision task, which 
     # currently is not tested enough for production use.
     'repo': '~/webapps/PROJECT_NAME/PROJECT_NAME.git',
@@ -52,7 +52,7 @@ PROD = {
         'password': 'DB_PASS',
         'name': 'DB_NAME',
         'host': 'DB_HOST_NAME',
-    }
+    },
     # The `repo` property is optional, it is only used by the provision task, which 
     # currently is not tested enough for production use.
     'repo': '~/webapps/PROJECT_NAME/PROJECT_NAME.git',
