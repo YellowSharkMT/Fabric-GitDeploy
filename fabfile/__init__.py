@@ -38,12 +38,13 @@ if SHOW_HEADER:
     
 
 ### --------------- Fabric Tasks --------------------- ###
-from core import Deploy, DBSync, FileSync
+from core import Deploy, DBSync, FileSync, Provision, Upgrade
 
 deploy = Deploy()
 db_sync = DBSync()
 file_sync = FileSync()
-
+provision = Provision()
+upgrade = Upgrade()
 
 @task
 def sync(src='prod', dest='local'):
@@ -96,107 +97,25 @@ def restart(dest='prod'):
     execute(deploy.restart, role=dest)
 
 
-def _provision(dest):
-    """
-    NOT RECOMMENDED - Provisions web root & archive folders, as well as git repo.
-
-    This task has not been hard-tested, and since it rarely needs to be done, there hasn't been much effort put into
-    scripting this aspect of things, especially considering all of the error-handling that would need to go on with this.
-
-    Instead, consider it a rough guide of things to do, in order to set up a new location for deployment.
-    """
-    with _host(dest):
-        for dir in ['archive', 'root', 'repo']:
-            try:
-                run('mkdir -p %s' % env[dest][dir])
-            except Exception as e:
-                print('Could not make the `%s` folder: %s' % (dir, e.message))
-
-        with cd(env[dest]['repo']):
-            try:
-                run('git init --bare')
-            except Exception as e:
-                print('Could not initialize the git repo: %s' % e.message)
-                sys.exit(0)
-
-            try:
-                local('git remote add %s %s' % (dest, env[dest]['repo']))
-                local('git push %s --all' % dest)
-            except:
-                print('Problems configuring local git remote and/or pushing it to the destination.')
-                sys.exit(0)
-
-        with cd(env[dest]['root']):
-            try:
-                run('git init')
-                run('git remote add origin %s' % env[dest]['repo'])
-                run('git pull origin master')
-            except:
-                print('Problems configuring destination web root.')
-                sys.exit(0)
-
-
 @task
-def upgrade():
+def test(dest='prod'):
     """
-    Executes upgrade procedure: downloads tarball of master into a local temp folder,
-    then copies the contents of the new `fabfile/` folder into the local `fabfile/` folder,
-    and then cleans up/removes the upgrade package.
-    """
-    if confirm('This will upgrade the Fabric-GitDeploy package. Continue?'):
-        local('mkdir ./fabric-upgrade')
-        local('curl -L https://github.com/YellowSharkMT/Fabric-GitDeploy/tarball/master' +
-               '| tar -xz --strip-components=1 -C fabric-upgrade/')
-        local('cp -r ./fabric-upgrade/fabfile/* ./fabfile/.')
-        local('rm -rf ./fabric-upgrade/')
-
-
-@task
-def test(env_name):
-    """
-    Tests connection to a specified host. (env_name)
+    Tests connection to a specified host. (dest: prod)
 
     Example usage:
 
     - `test:dev`
     - `test:prod`
     """
-    with _host(env_name):
-        print('Executing `uname -a` on %s' % env_name)
+    @roles('prod')
+    def run_test():
+        env.host_string = env[dest]['hosts'][0]
         run('uname -a')
+
+    execute(run_test, role=dest)
 
 
 ### ----- Private Functions -------- ###
-def _fetch(host, fn):
-    """
-    Fetches a remote database's dump file (src, fn), from the `archives` directory of the specified environment. There
-    are no defaults for this task, you MUST provide a server to use, and a filename to download.
-    """
-    with _host(host):
-        print('Fetching database...')
-        with quiet():
-            return get(fn, env['local']['archive'])
-
-
-def _filter_quiet_commands(cmd):
-    """
-    Takes a callable of some sort, and depending on the QUIET_COMMANDS config value, it suppresses (or doesn't) the
-    output of the command. Typically this is used to suppress the output of the `local()` command from fabric.api,
-    which does NOT supprt the quiet=False/True parameter.
-
-    Example usage, showing how to wrap a `local()` command in a lambda, and feed it to this function:
-
-    - _filter_quiet_commands(lambda: local('uname -a'))
-    """
-    if cmd is None:
-        raise ValueError('The `cmd` parameter should be a callable.')
-    if QUIET_COMMANDS:
-        with quiet():
-            cmd()
-    else:
-        cmd()
-
-        
 def _build_docs():
     """
     This builds out documentation of the tasks for the README.md file. To re-build the docs, just open the python
@@ -231,23 +150,3 @@ def _build_docs():
             f.seek(0)
             f.truncate()
             f.write(top + DELIMITER + doc_text)
-
-
-### ----- Context Managers -------- ###
-@contextmanager
-def _host(src):
-    """
-    Typically used for wrapping `run()` commands. On entry, it sets the `env.host_string` to the hostname for the
-    specified server; on exit, it sets the `env.host_string` to None.
-
-    Example usage:
-
-    - with _host('prod'):
-    -     run('uname -a')
-    -     run('date')
-    """
-    try:
-        env.host_string = env[src]['hostname']
-        yield True
-    finally:
-        env.host_string = None
