@@ -122,3 +122,11 @@ Example usage:
 
 Arguments: env_name
 
+###`upgrade`
+
+Executes upgrade procedure: downloads tarball of master into a local temp folder,
+then copies the contents of the new `fabfile/` folder into the local `fabfile/` folder,
+and then cleans up/removes the upgrade package.
+
+Arguments:
+
