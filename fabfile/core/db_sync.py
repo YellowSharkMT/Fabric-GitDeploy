@@ -41,17 +41,12 @@ class DBSync(Task):
         if src == 'local':
             raise ValueError('Using the local database as a source is not currently supported.')
 
-        # notice that the dump command is only executed on one server, not the entire set of
-        # servers defined in the `hosts` config value for each environment.
-        dump_result = execute(self.dump, src, hosts=env[src]['hosts'][0])
-        dump_fn, dump_full_fn = dump_result.popitem()[1]
-
         if dest == 'local':
-            fetch_result = execute(self.fetch, dump_full_fn, hosts=env[src]['hosts'][0])
-            insert_dump_fn = fetch_result.popitem()[1][0]
+            dump_result = execute(self.dump_fetch, src, hosts=env[src]['hosts'][0])
         else:
-            insert_dump_fn = dump_fn
+            dump_result = execute(self.dump, src, hosts=env[src]['hosts'][0])
 
+        insert_dump_fn = dump_result.popitem()[1][0]
         execute(self.insert_db, dest, insert_dump_fn, hosts=env[dest]['hosts'][0])
         execute(self.migrate, dest, hosts=env[dest]['hosts'][0])
 
@@ -68,6 +63,14 @@ class DBSync(Task):
         cmd = 'gunzip < %s | %s' % (insert_dump_fn, insert_cmd)
         print('Inserting database....')
         run(cmd, quiet=QUIET_COMMANDS)
+
+
+    @hosts([default_prod_host])
+    def dump_fetch(self, src):
+        dump_result = execute(self.dump, src, hosts=env[src]['hosts'][0])
+        _, dump_full_fn = dump_result.popitem()[1]
+        fetch_result = execute(self.fetch, dump_full_fn, hosts=env[src]['hosts'][0])
+        return fetch_result.popitem()[1]
 
 
     @hosts([default_prod_host])
