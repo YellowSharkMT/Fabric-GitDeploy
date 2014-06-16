@@ -5,10 +5,6 @@ This file contains the deploy task.
 from fabric.api import env, run, local, cd, lcd, quiet, execute, parallel, roles
 from fabric.tasks import Task
 
-# Local Imports
-from .common import filter_quiet_commands
-from ..config import QUIET_COMMANDS, APP_RESTART_COMMANDS, POST_DEPLOY_COMMANDS
-
 
 class Deploy(Task):
     """
@@ -41,10 +37,10 @@ class Deploy(Task):
         execute(self.push_app)
         execute(self.update_remote, role=dest)
         
-        if len(POST_DEPLOY_COMMANDS):
+        if len(env.conf.post_deploy_commands):
             execute(self.post_deploy, role=dest)
             
-        if len(APP_RESTART_COMMANDS):
+        if len(env.conf.app_restart_commands):
             execute(self.restart, role=dest)
         
         
@@ -56,7 +52,7 @@ class Deploy(Task):
         with lcd(env.local['root']):
             print('Pushing %(branch)s branch to %(dest)s:%(dest_branch)s...' % self.cmd_data)
             cmd = lambda: local('git push %(dest)s %(branch)s:%(dest_branch)s' % self.cmd_data)
-            filter_quiet_commands(cmd)
+            filter_env.conf.quiet_commands(cmd)
     
     
     @parallel
@@ -69,7 +65,7 @@ class Deploy(Task):
         with cd(env[dest]['root']):
             # note the dependency on the remote name "origin"
             print('Updating destination from %(dest)s:%(dest_branch)s...' % self.cmd_data)
-            run('git reset --hard && git pull origin %(dest_branch)s' % self.cmd_data, quiet=QUIET_COMMANDS)
+            run('git reset --hard && git pull origin %(dest_branch)s' % self.cmd_data, quiet=env.conf.quiet_commands)
         pass
     
     
@@ -77,22 +73,22 @@ class Deploy(Task):
     @roles('prod')
     def post_deploy(self):
         """
-        Executes the commands defined in POST_DEPLOY_COMMANDS, from the config.py 
+        Executes the commands defined in env.conf.post_deploy_commands, from the config.py 
         file. Typically this would be a good place to set file permissions, file  
         cleanup, etc.
         """
         dest = self.cmd_data['dest']
         with cd(env[dest]['root']):
-            for cmd in POST_DEPLOY_COMMANDS:
-                run(cmd % env[dest], quiet=QUIET_COMMANDS)                
+            for cmd in env.conf.post_deploy_commands:
+                run(cmd % env[dest], quiet=env.conf.quiet_commands)                
 
 
     @parallel
     @roles('prod')
     def restart(self):
         """
-        Executes any commands defined in the APP_RESTART_COMMANDS config value.
+        Executes any commands defined in the env.conf.app_restart_commands config value.
         """
         print('Restarting application...')
-        for cmd in APP_RESTART_COMMANDS:
-            run(cmd, quiet=QUIET_COMMANDS)
+        for cmd in env.conf.app_restart_commands:
+            run(cmd, quiet=env.conf.quiet_commands)
