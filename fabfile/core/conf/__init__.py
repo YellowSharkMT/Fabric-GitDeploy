@@ -2,6 +2,10 @@ from fabric.api import *
 import imp
 import os
 
+from .base import ConfigBase
+from .commands import Commands
+from .header import Header
+from .server import Server
 
 def config_loader():
     """
@@ -10,8 +14,6 @@ def config_loader():
     :return:
     """
     if os.environ.get('FAB_CONFIG') is not None:
-        import imp
-
         try:
             config = imp.load_source('config', os.environ.get('FAB_CONFIG'))
         except ImportError as e:
@@ -26,68 +28,6 @@ def config_loader():
         env.conf = Config(config)
     except ImportError as e:
         raise Exception('There was a problem loading the configuration values: ' + e.message)
-
-
-class ConfigBase(object):
-    def get(self, prop):
-        try:
-            return getattr(self, prop)
-        except Exception as e:
-            e.message = 'Unable to access that property. ' + e.message
-
-    def set(self, prop, value):
-        try:
-            return setattr(self, prop, value)
-        except Exception as e:
-            e.message = 'Unable to set that property/value. ' + e.message
-
-
-class Server(ConfigBase):
-    name = None
-    hostname = 'user@server'
-    hosts = ['user@server1', 'user@server2']
-    home_url = 'http://subdomain.website.com/'
-    wp_url = 'http://subdomain.website.com/'
-    archive = '~/webapps/PROJECT_NAME/archives'
-    root = '~/webapps/PROJECT_NAME/dev'
-    repo = '~/webapps/PROJECT_NAME/PROJECT_NAME.git'
-    db = {
-        'user': 'DB_USER',
-        'password': 'DB_PASS',
-        'name': 'DB_NAME',
-        'host': 'DB_HOST_NAME',
-    }
-
-    def __init__(self, name, server=None):
-        if name is None:
-            raise ValueError('Server name must be provided.')
-        self.name = name
-        self.set_server(server)
-
-
-    def set_server(self, server):
-        if server is not None:
-            if server is not dict:
-                raise ValueError('Server must be a dictionary of values.')
-
-            for key in server:
-                self.set(key, server[key])
-
-
-class Header(ConfigBase):
-    content = []
-
-    def __init__(self, content=None):
-        if content is not None:
-            self.content = content
-
-
-class Commands(ConfigBase):
-    commands = []
-
-    def __init__(self, commands=None):
-        if commands is not None:
-            self.commands = commands
 
 
 class Config(ConfigBase):
