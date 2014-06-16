@@ -4,44 +4,33 @@ from fabric.api import *
 import os
 import re
 
-### --- Local Imports --- ###
-from fabfile.core.conf import config_loader
-config_loader()
-
-if os.environ.get('FAB_CONFIG') is not None:
-    import imp
-    c = imp.load_source('config', os.environ.get('FAB_CONFIG'))
-
-try:
-    from config import LOCAL, DEV, PROD, PROJECT_NAME, WP_PREFIX, UNVERSIONED_FOLDERS, \
-    POST_DEPLOY_COMMANDS, APP_RESTART_COMMANDS, SHOW_HEADER, HEADER_FN, QUIET_COMMANDS, \
-    DATABASE_MIGRATION_COMMANDS
-except ImportError as e:
-    raise Exception('There was a problem loading the configuration values: ' + e.message)
+### --- Local Imports & Setup/Init  --- ###
+from fabfile.core.conf import load_config
+from core.common import display_header
+from core import Deploy, DBSync, FileSync, Provision, Upgrade
 
 
-### --- Configure the `env` & show/hide the header --- ###
-__all__ = ['deploy', 'db_sync', 'file_sync', 'provision', 'upgrade', 'sync', 'dump', 'restart', 'test']
+def setup():
+    load_config()
 
-env.use_ssh_config = True
+    ### --- Configure the `env` & show/hide the header --- ###
+    __all__ = ['deploy', 'db_sync', 'file_sync', 'provision', 'upgrade', 'sync', 'dump', 'restart', 'test']
 
-env['local'] = LOCAL
-env['dev'] = DEV
-env['prod'] = PROD
+    env.use_ssh_config = True
+    env.local = env.conf.local
+    env.dev = env.conf.dev
+    env.prod = env.conf.prod
 
-env.roledefs = {
-    'prod': PROD['hosts'],
-    'dev': DEV['hosts'],
-    'local': LOCAL['hosts']
-}
+    env.roledefs = {
+        'prod': env.conf.prod['hosts'],
+        'dev': env.conf.dev['hosts'],
+        'local': env.conf.local['hosts'],
+    }
 
-# Show the header
-if SHOW_HEADER:
-    HEADER_FN()
-    
+setup()
+display_header()
 
 ### --------------- Fabric Tasks --------------------- ###
-from core import Deploy, DBSync, FileSync, Provision, Upgrade
 
 deploy = Deploy()
 db_sync = DBSync()
