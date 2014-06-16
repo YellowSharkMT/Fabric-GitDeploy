@@ -5,10 +5,6 @@ This file contains the file synchronization task.
 from fabric.api import env, run, local, cd, lcd, quiet, execute, parallel
 from fabric.tasks import Task
 
-# Local Imports
-from .common import filter_quiet_commands
-from ..config import UNVERSIONED_FOLDERS
-
 
 class FileSync(Task):
     """
@@ -37,7 +33,7 @@ class FileSync(Task):
         - `fab rsync:local,dev   # NOT RECOMMENDED - have not developed/tested this yet.`
         - `fab rsync:prod,dev    # NOT RECOMMENDED - have not tested this, nor is it necessary UNLESS the dev server is on a different server than the prod server. Also, not sure rsync supports one remote to another.`
         """
-        for dir in UNVERSIONED_FOLDERS:
+        for dir in env.conf.unversioned_folders:
             cmd_vars = {
                 'src_host': env[src]['hostname'],
                 'dest_host': env[dest]['hostname'],
