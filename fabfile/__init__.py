@@ -5,6 +5,10 @@ import os
 import re
 
 ### --- Local Imports --- ###
+if os.environ.get('FAB_CONFIG') is not None:
+    import imp
+    c = imp.load_source('config', os.environ.get('FAB_CONFIG'))
+
 try:
     from config import LOCAL, DEV, PROD, PROJECT_NAME, WP_PREFIX, UNVERSIONED_FOLDERS, \
     POST_DEPLOY_COMMANDS, APP_RESTART_COMMANDS, SHOW_HEADER, HEADER_FN, QUIET_COMMANDS, \
