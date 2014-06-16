@@ -1,7 +1,8 @@
 from fabric.api import *
 from .base import ConfigBase
+from weakref import WeakKeyDictionary
 
-class Server(ConfigBase):
+class ServerInfo(WeakKeyDictionary):
     name = None
     hostname = 'user@server'
     hosts = ['user@server1', 'user@server2']
@@ -17,17 +18,16 @@ class Server(ConfigBase):
         'host': 'DB_HOST_NAME',
     }
 
-    def __init__(self, name, server=None):
-        if name is None:
-            raise ValueError('Server name must be provided.')
-        self.name = name
-        self.set_server(server)
+class Server(object):
+    def __init__(self, default):
+        self.default = default
+        self.data = ServerInfo()
 
+    def __get__(self, instance, owner):
+        return self.data.get(instance, self.default)
 
-    def set_server(self, server):
-        if server is not None:
-            if server is not dict:
+    def __set__(self, instance, value):
+        if value is not None:
+            if not isinstance(value, dict):
                 raise ValueError('Server must be a dictionary of values.')
-
-            for key in server:
-                self.set(key, server[key])
+            self.data[instance] = value

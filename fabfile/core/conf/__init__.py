@@ -47,14 +47,22 @@ class Config(ConfigBase):
     post_deploy_commands = Commands()
     app_restart_commands = Commands()
     database_migration_commands = Commands()
-    fabfile_header = Header()
+    header = Header()
 
     def __init__(self, config):
-        try:
-            foo = config.LOCAL
-        except Exception as e:
-            e.message = 'Could not access the LOCA variable. ' + e.message
-            raise e
+        self.project_name = config.PROJECT_NAME
+        self.wp_prefix = config.WP_PREFIX
+        self.unversioned_folders = config.UNVERSIONED_FOLDERS
+        self.post_deploy_commands = config.POST_DEPLOY_COMMANDS
+        self.app_restart_commands = config.APP_RESTART_COMMANDS
+        self.database_migration_commands = config.DATABASE_MIGRATION_COMMANDS
+        self.show_header = config.SHOW_HEADER
+        self.quiet_commands = config.QUIET_COMMANDS
+        self.header = config.HEADER
+        self.local = config.LOCAL
+        self.dev = config.DEV
+        self.prod = config.PROD
 
-        pass
+    def __unicode__(self):
+        return self.project_name
 
