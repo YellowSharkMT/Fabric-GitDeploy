@@ -5,6 +5,9 @@ import os
 import re
 
 ### --- Local Imports --- ###
+from fabfile.core.conf import config_loader
+config_loader()
+
 if os.environ.get('FAB_CONFIG') is not None:
     import imp
     c = imp.load_source('config', os.environ.get('FAB_CONFIG'))
