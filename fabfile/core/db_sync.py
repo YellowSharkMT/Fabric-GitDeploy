@@ -6,9 +6,6 @@ from fabric.api import env, run, quiet, execute, hosts, get
 from fabric.tasks import Task
 import time
 
-# Local Imports
-from ..config import QUIET_COMMANDS, WP_PREFIX, DATABASE_MIGRATION_COMMANDS, PROJECT_NAME
-
 
 class DBSync(Task):
     """
@@ -74,7 +71,7 @@ class DBSync(Task):
         insert_cmd = 'mysql -u %(user)s -p%(password)s -h %(host)s %(name)s' % env[dest]['db']
         cmd = 'gunzip < %s | %s' % (insert_dump_fn, insert_cmd)
         print('Inserting database....')
-        run(cmd, quiet=QUIET_COMMANDS)
+        run(cmd, quiet=env.conf.quiet_commands)
 
 
     @hosts([])  # prod
@@ -117,12 +114,12 @@ class DBSync(Task):
         """
         cmd_vars = env[src]['db']
         dump_cmd = 'mysqldump -u %(user)s -p%(password)s -h %(host)s %(name)s' % cmd_vars
-        dump_fn_stem = '%s-%s.%s' % (PROJECT_NAME, time.strftime("%Y.%m.%d-%H.%M.%S"), src)
+        dump_fn_stem = '%s-%s.%s' % (env.conf.project_name, time.strftime("%Y.%m.%d-%H.%M.%S"), src)
         dump_fn = '%s.sql.gz' % dump_fn_stem
         dump_full_fn = '%s/%s' % (env[src]['archive'], dump_fn)
         cmd = '%s | gzip > %s' % (dump_cmd, dump_full_fn)
         print('Dumping database...')
-        run(cmd, quiet=QUIET_COMMANDS)
+        run(cmd, quiet=env.conf.quiet_commands)
 
         return dump_fn, dump_full_fn
 
@@ -147,7 +144,7 @@ class DBSync(Task):
         print('Running MySQL migration commands...')
         for query in sql:
             cmd = cmd_prefix + (' -s -N -e "%s"' % query)
-            run(cmd, quiet=QUIET_COMMANDS)
+            run(cmd, quiet=env.conf.quiet_commands)
 
 
     def make_update_sql(self, db_name, *args, **kwargs):
@@ -159,6 +156,6 @@ class DBSync(Task):
         :param db_name: database name
         :param kwargs: any kwargs will get interpolated into the SQL command string that is generated
         """
-        cmd_data = dict(db_name=db_name, db_prefix=WP_PREFIX, **kwargs)
-        sql = [(cmd % cmd_data) for cmd in DATABASE_MIGRATION_COMMANDS]
+        cmd_data = dict(db_name=db_name, db_prefix=env.conf.wp_prefix, **kwargs)
+        sql = [(cmd % cmd_data) for cmd in env.conf.database_migration_commands]
         return sql
