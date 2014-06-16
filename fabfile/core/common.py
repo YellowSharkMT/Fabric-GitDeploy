@@ -22,3 +22,9 @@ def filter_quiet_commands(cmd):
             cmd()
     else:
         cmd()
+
+
+def display_header():
+    if env.conf.show_header and len(env.conf.header) > 0:
+        for line in env.conf.header:
+            print(line)

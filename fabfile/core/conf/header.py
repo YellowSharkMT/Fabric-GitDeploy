@@ -1,10 +1,6 @@
 from fabric.api import *
 from .base import ConfigBase
 
-def display_header():
-    if env.conf.show_header and len(env.conf.header) > 0:
-        for line in env.conf.header:
-            print(line)
 
 class Header(object):
     def __init__(self, content=None):

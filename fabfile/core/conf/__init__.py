@@ -4,11 +4,11 @@ import os
 
 from .base import ConfigBase
 from .commands import Commands
-from .header import Header, display_header
+from .header import Header
 from .server import Server
 
 # Restrict what can be imported form this module to just these items:
-__all__ = ['load_config', 'display_header']
+__all__ = ['load_config']
 
 def load_config():
     """
