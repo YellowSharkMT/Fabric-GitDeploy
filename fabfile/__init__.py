@@ -5,9 +5,9 @@ import os
 import re
 
 ### --- Local Imports & Setup/Init  --- ###
-from fabfile.core.conf import load_config
-from core.common import display_header
-from core import Deploy, DBSync, FileSync, Provision, Upgrade
+from .core.conf import load_config
+from .core.common import display_header
+from .core import Deploy, DBSync, FileSync, Provision, Upgrade
 
 
 def setup():
