@@ -9,8 +9,6 @@ import time
 # Local Imports
 from ..config import QUIET_COMMANDS, WP_PREFIX, DATABASE_MIGRATION_COMMANDS, PROJECT_NAME
 
-default_prod_host = env['prod']['hosts'][0]
-default_local_host = env['local']['hosts'][0]
 
 class DBSync(Task):
     """
@@ -18,10 +16,24 @@ class DBSync(Task):
     """
     name = 'db'
     cmd_data = dict()
-    
-    def __init__(self,*args, **kwargs):
+
+    def __init__(self, *args, **kwargs):
         super(DBSync, self).__init__(*args, **kwargs)
-        
+
+
+    def setup_default_hosts(self):
+        default_prod_host = env['prod']['hosts'][0]
+        default_local_host = env['local']['hosts'][0]
+
+        self.insert_db = hosts(self.insert_db, default_local_host)
+        self.dump_fetch = hosts(self.dump_fetch, default_prod_host)
+        self.dump_fetch = hosts(self.dump_fetch, default_prod_host)
+        self.fetch = hosts(self.fetch, default_prod_host)
+        self.dump = hosts(self.dump, default_prod_host)
+        self.migrate = hosts(self.migrate, default_local_host)
+        pass
+
+
     def run(self, src='prod', dest='local', *args, **kwargs):
         """
         Copies the database from one server to another, essentially an export/import. (src: prod, dest: local)
@@ -51,7 +63,7 @@ class DBSync(Task):
         execute(self.migrate, dest, hosts=env[dest]['hosts'][0])
 
 
-    @hosts([default_local_host])
+    @hosts([])  # default = local
     def insert_db(self, dest, insert_dump_fn):
         """
         Creates & executes the insert commands
@@ -65,7 +77,7 @@ class DBSync(Task):
         run(cmd, quiet=QUIET_COMMANDS)
 
 
-    @hosts([default_prod_host])
+    @hosts([])  # prod
     def dump_fetch(self, src):
         dump_result = execute(self.dump, src, hosts=env[src]['hosts'][0])
         _, dump_full_fn = dump_result.popitem()[1]
@@ -73,7 +85,7 @@ class DBSync(Task):
         return fetch_result.popitem()[1]
 
 
-    @hosts([default_prod_host])
+    @hosts([])  # # prod
     def fetch(self, fn):
         """
         Fetches a remote database's dump file (src, fn). The default host for this command is `prod`.
@@ -86,8 +98,8 @@ class DBSync(Task):
         with quiet():
             return get(fn, env['local']['archive'])
 
-        
-    @hosts([default_prod_host])
+
+    @hosts([])  # prod
     def dump(self, src='prod'):
         """
         Dumps a database, then downloads it to `backup/` folder. Useful for performing back-ups. (src: prod, fetch_dump: True)
@@ -115,7 +127,7 @@ class DBSync(Task):
         return dump_fn, dump_full_fn
 
 
-    @hosts([default_local_host])
+    @hosts([])  # local
     def migrate(self, dest='local'):
         """
         Updates WordPress database so it works on a different server (dest: local).
@@ -137,7 +149,7 @@ class DBSync(Task):
             cmd = cmd_prefix + (' -s -N -e "%s"' % query)
             run(cmd, quiet=QUIET_COMMANDS)
 
-            
+
     def make_update_sql(self, db_name, *args, **kwargs):
         """
         Generates & returns MySQL commands to migrate the database. Typically this involves things like updating hostnames, 
