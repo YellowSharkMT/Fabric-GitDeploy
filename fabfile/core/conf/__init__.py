@@ -4,10 +4,13 @@ import os
 
 from .base import ConfigBase
 from .commands import Commands
-from .header import Header
+from .header import Header, display_header
 from .server import Server
 
-def config_loader():
+# Restrict what can be imported form this module to just these items:
+__all__ = ['load_config', 'display_header']
+
+def load_config():
     """
     Loads the configuration, either from the `FAB_CONFIG` environment variable, or from a
     local `fabfile/config.py` file.
