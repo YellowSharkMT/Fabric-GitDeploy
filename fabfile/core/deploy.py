@@ -4,6 +4,7 @@ This file contains the deploy task.
 # Fabric/Global Imports
 from fabric.api import env, run, local, cd, lcd, quiet, execute, parallel, roles
 from fabric.tasks import Task
+from fabfile.core.common import filter_quiet_commands
 
 
 class Deploy(Task):
@@ -52,7 +53,7 @@ class Deploy(Task):
         with lcd(env.local['root']):
             print('Pushing %(branch)s branch to %(dest)s:%(dest_branch)s...' % self.cmd_data)
             cmd = lambda: local('git push %(dest)s %(branch)s:%(dest_branch)s' % self.cmd_data)
-            filter_env.conf.quiet_commands(cmd)
+            filter_quiet_commands(cmd)
     
     
     @parallel
