@@ -9,8 +9,6 @@ from fabric.api import env, run, local, cd, execute, parallel, roles, hosts
 from fabric.contrib.console import confirm
 from fabric.tasks import Task
 
-# Local Imports
-
 
 class Provision(Task):
     """
