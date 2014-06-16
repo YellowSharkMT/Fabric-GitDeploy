@@ -2,10 +2,7 @@
 This file is a catch-all location for any helper functions needed by this package.
 """
 # Fabric/Global Imports
-from fabric.api import quiet
-
-# Local Imports
-from ..config import QUIET_COMMANDS
+from fabric.api import quiet, env
 
 
 def filter_quiet_commands(cmd):
@@ -20,7 +17,7 @@ def filter_quiet_commands(cmd):
     """
     if cmd is None:
         raise ValueError('The `cmd` parameter should be a callable.')
-    if QUIET_COMMANDS:
+    if env.conf.quiet_commands:
         with quiet():
             cmd()
     else:
