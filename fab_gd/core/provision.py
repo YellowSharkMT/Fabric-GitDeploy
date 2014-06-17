@@ -5,7 +5,7 @@ USE AT YOUR OWN RISK.
 """
 
 # Fabric/Global Imports
-from fabric.api import env, run, local, cd, execute, parallel, roles, hosts
+from fabric.api import env, run, local, cd, execute, parallel, roles, hosts, lcd
 from fabric.contrib.console import confirm
 from fabric.tasks import Task
 
@@ -30,12 +30,11 @@ class Provision(Task):
 
         Instead, consider it a rough guide of things to do, in order to set up a new location for deployment.
         """
-        if confirm('This will provision the %s environment. Continue?'):
-            execute(self.provision, dest, role=[dest])
+        if True: #confirm('This will provision the %s environment. Continue?'):
+            execute(self.provision, dest, role=dest)
 
 
-    @roles
-    @parallel
+    @roles('prod')
     def provision(self, dest):
         for dir_name in ['archive', 'root', 'repo']:
             try:
@@ -49,11 +48,12 @@ class Provision(Task):
             except Exception as e:
                 raise Exception('Could not initialize the git repo: %s' % e.message)
 
-            try:
-                local('git remote add %s %s' % (dest, env[dest]['repo']))
-                local('git push %s --all' % dest)
-            except:
-                raise Exception('Problems configuring local git remote and/or pushing it to the destination.')
+            with lcd(env['local']['root']):
+                try:
+                    local('git remote add %s %s:%s' % (dest, env.host_string, env[dest]['repo']))
+                    local('git push %s --all' % dest)
+                except:
+                    raise Exception('Problems configuring local git remote and/or pushing it to the destination.')
 
         with cd(env[dest]['root']):
             try:
