@@ -4,7 +4,7 @@ This file contains the deploy task.
 # Fabric/Global Imports
 from fabric.api import env, run, local, cd, lcd, quiet, execute, parallel, roles
 from fabric.tasks import Task
-from fabfile.core.common import filter_quiet_commands
+from .common import filter_quiet_commands
 
 
 class Deploy(Task):
