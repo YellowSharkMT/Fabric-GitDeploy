@@ -117,14 +117,14 @@ SHOW_HEADER = False
 """
 This is the header, and will only be shown in the SHOW_HEADER value is set to True
 """
-def HEADER_FN():
-    print('** Fabfile for WEBSITE.com, contact YOUR NAVE <YOUREMAIL@EMAIL.COM> with questions.')
-    print('** Use `fab -l` to list all tasks.')
-    print('** Use `fab -d TASKNAME` to show documentation & usage examples for a task.')
-    print('** Ex. usage: `fab deploy:dev sync:prod,dev`')
-    print('** For more information on Fabric, visit http://fabfile.org.')
-    print('')
-
+HEADER = [
+    '** Fabfile for WEBSITE.com, contact YOUR NAVE <YOUREMAIL@EMAIL.COM> with questions.',
+    '** Use `fab -l` to list all tasks.',
+    '** Use `fab -d TASKNAME` to show documentation & usage examples for a task.',
+    '** Ex. usage: `fab deploy:dev sync:prod,dev`',
+    '** For more information on Fabric, visit http://fabfile.org.',
+    '',
+]
 
 """
 Controls output of the `run()` commands. For verbose output, set this to `False`.
